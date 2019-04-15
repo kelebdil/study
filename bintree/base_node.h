@@ -34,16 +34,6 @@ public:
     typedef LinkType link_type;
     typedef KeyType key_type;
     typedef ParentType parent_type;
-
-    template <
-        typename P1,
-        typename K1,
-        typename L1,
-        L1 NewSentinel
-    > struct rebind {
-        typedef BaseNode<P1, K1, L1, NewSentinel> other;
-    };
-
     typedef std::array<link_type, detail::links_size> links_array;
 
     static constexpr link_type sentinel = Sentinel;
@@ -51,8 +41,10 @@ public:
     BaseNode(key_type key = key_type()) :
         key_(std::move(key))
     {
-        fill(links.begin(), links.end(), sentinel);
+        std::fill(links_.begin(), links_.end(), sentinel);
     }
+
+    virtual ~BaseNode() = default;
 
     const links_array & links() const {
         return links_;
@@ -100,7 +92,8 @@ private:
 };
 
 
-std::size_t swap_left_right(std::size_t left_or_right) {
+template <std::size_t left_or_right>
+constexpr std::size_t swap_left_right() {
     if (left_or_right == detail::left) {
         return detail::right;
     } else if (left_or_right == detail::right) {
