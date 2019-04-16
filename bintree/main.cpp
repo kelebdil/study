@@ -26,7 +26,7 @@ int main(int , char ** )
     }
 
     std::size_t cursor = 0;
-    for(auto it = tree.begin(); it != Node::sentinel; it = tree.get_nearest_neighbour<detail::right>(it)) {
+    for(auto it = tree.begin(); it != tree.end(); it = tree.get_nearest_neighbour<detail::right>(it)) {
         assert(it->key() == sorted_numbers[cursor++]);
     }
 
@@ -37,10 +37,9 @@ int main(int , char ** )
     }
 
     cursor = 0;
-    for(auto it = t2.begin(); it != Node::sentinel; it = t2.get_nearest_neighbour<detail::right>(it)) {
+    for(auto it = t2.begin(); it != t2.end(); it = t2.get_nearest_neighbour<detail::right>(it)) {
         assert(it->key() == sorted_numbers[cursor++]);
     }
-
 
     return 0;
 }

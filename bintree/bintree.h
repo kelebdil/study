@@ -130,6 +130,10 @@ public:
         return comparator;
     }
 
+    node_policy_type get_node_policy() const {
+        return node_policy;
+    }
+
     const_link_type begin() const {
         return get_directmost_neighbour<detail::left>(root);
     }
@@ -146,13 +150,25 @@ public:
         return get_directmost_neighbour<detail::right>(root);
     }
 
+    const_link_type end() const {
+        return sentinel;
+    }
+
+    const_link_type rend() const {
+        return sentinel;
+    }
+
+    link_type end() {
+        return sentinel;
+    }
+
+    link_type rend() {
+        return sentinel;
+    }
+
     template <std::size_t direction>
     const_link_type get_directmost_neighbour(const_link_type item) const {
-        static_assert(
-            direction == detail::left ||
-            direction == detail::right ||
-            direction == detail::up,
-            "direction must be left, right or up");
+        check_direction<direction>();
         const_link_type current_link = item;
         if (item == sentinel) {
             return sentinel;
@@ -173,11 +189,7 @@ public:
 
     template <std::size_t direction>
     link_type get_directmost_neighbour(link_type item) {
-        static_assert(
-            direction == detail::left ||
-            direction == detail::right ||
-            direction == detail::up,
-            "direction must be left, right or up");
+        check_direction<direction>();
         link_type current_link = item;
         if (item == sentinel) {
             return sentinel;
@@ -200,11 +212,7 @@ public:
 
     template <std::size_t direction>
     const_link_type& deref_link(const_link_type item) const {
-        static_assert(
-            direction == detail::left ||
-            direction == detail::right ||
-            direction == detail::up,
-            "direction must be left, right or up");
+        check_direction<direction>();
         if (item == sentinel) {
             return sentinel;
         }
@@ -213,11 +221,7 @@ public:
 
     template <std::size_t direction>
     link_type& deref_link(link_type item) {
-        static_assert(
-            direction == detail::left ||
-            direction == detail::right ||
-            direction == detail::up,
-            "direction must be left, right or up");
+        check_direction<direction>();
         if (item == sentinel) {
             throw std::logic_error("");
         }
@@ -226,11 +230,7 @@ public:
 
     template <std::size_t Right>
     link_type get_nearest_neighbour(link_type item) {
-        static_assert(
-            Right == detail::left ||
-            Right == detail::right ||
-            Right == detail::up,
-            "direction must be left, right or up");
+        check_direction<Right>();
         if (item == sentinel) {
             return sentinel;
         }
@@ -252,6 +252,15 @@ public:
     }
 
 protected:
+    template <std::size_t direction>
+    void check_direction()
+    {
+        static_assert(
+            direction == detail::left ||
+            direction == detail::right ||
+            direction == detail::up,
+        "direction must be left, right or up");
+    };
 
     bool less(key_type k1, key_type k2) const {
         return comparator(k1, k2);
