@@ -15,27 +15,19 @@ void print_node(const Node &node) {
 
 int main(int , char ** )
 {
-    Tree tree;
-    /*               8
-     *       4                12
-     *   2       6        10     14
-     * 1   3   5   7    9   11 13   15
-     */
     std::vector<std::uint64_t> numbers = {8, 4, 12, 2, 6, 10, 14, 1, 3, 5, 7, 9, 11, 13, 15};
+    std::vector<std::uint64_t> sorted_numbers = numbers;
+    std::sort(sorted_numbers.begin(), sorted_numbers.end());
+
+    Tree tree;
 
     for (const auto & i : numbers) {
-        std::cout << "==============" << std::endl;
         tree.insert(i);
-        std::cout << std::endl;
-        std::cout << "==============" << std::endl;
-        std::cout << tree.dump_tree();
-        std::cout << "==============" << std::endl;
+    }
 
-        for(auto it = tree.begin(); it != Node::sentinel; it = tree.get_nearest_neighbour<detail::right>(it)) {
-            std::cout << std::endl << "Current it: " << it << std::endl;
-        }
-        std::cout << std::endl;
-        std::cout << "==============" << std::endl;
+    std::size_t cursor = 0;
+    for(auto it = tree.begin(); it != Node::sentinel; it = tree.get_nearest_neighbour<detail::right>(it)) {
+        assert(it->key() == sorted_numbers[cursor++]);
     }
 
     Tree t2;
@@ -44,11 +36,11 @@ int main(int , char ** )
         t2.insert(i);
     }
 
-    std::cout << t2.dump_tree() << std::endl;
-
-    for (auto it = t2.begin(); it != Node::sentinel; it = tree.get_nearest_neighbour<detail::right>(it)) {
-        std::cout << it->key() << " ";
+    cursor = 0;
+    for(auto it = t2.begin(); it != Node::sentinel; it = t2.get_nearest_neighbour<detail::right>(it)) {
+        assert(it->key() == sorted_numbers[cursor++]);
     }
-    std::cout << std::endl;
+
+
     return 0;
 }

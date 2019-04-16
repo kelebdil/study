@@ -5,9 +5,6 @@
 #include <tuple>
 #include <utility>
 #include <queue>
-#include <iostream>
-#include <sstream>
-#include <string>
 
 #include "base_node.h"
 
@@ -59,7 +56,7 @@ public:
 
     link_type new_node(key_type key) {
         link_type p = node_allocator.allocate(1);
-        node_allocator.construct(p, key);
+        node_allocator.construct(p, std::move(key));
         return p;
     }
 
@@ -108,7 +105,8 @@ public:
     }
 
     ~BinTree(){
-        std::queue<link_type> q;
+        typedef typename allocator_type::template rebind<link_type>::other link_type_allocator;
+        std::queue<link_type, std::deque<link_type, link_type_allocator>> q;
         q.push(root);
         while(!q.empty()) {
             link_type p = q.front();
@@ -234,62 +232,23 @@ public:
             Right == detail::up,
             "direction must be left, right or up");
         if (item == sentinel) {
-            std::cout << "- " ;
             return sentinel;
         }
         constexpr std::size_t Up = detail::up;
         constexpr std::size_t Left = detail::swap_left_right<Right>();
         if (deref_link<Right>(item) != sentinel) {
             auto result = get_directmost_neighbour<Left>(deref_link<Right>(item));
-            std::cout << result << " ";
             return result;
         }
         link_type up = deref_link<Up>(item);
         if (up != sentinel && item == deref_link<Left>(up)) {
-            std::cout << up << " ";
             return up;
         }
         while (up != sentinel && item == deref_link<Right>(up)) {
             item = up;
             up = deref_link<Up>(up);
         }
-        std::cout << up << " ";
         return up;
-    }
-
-    std::string dump_tree() const
-    {
-        std::stringstream ss;
-
-        ss << "+++++DUMP+++++" << std::endl;
-        std::queue<link_type> q;
-        q.push(root);
-        int max_level_size = 1;
-        int level_size = max_level_size;
-        while(!q.empty()) {
-            link_type l = q.front();
-            q.pop(); level_size--;
-            bool e = (level_size == 0);
-
-            if (l!=sentinel) {
-                node_type &node = node_policy.deref(l);
-                ss << l;
-                q.push(node.left());
-                q.push(node.right());
-            } else {
-                ss << "-";
-            }
-            if (e) {
-                ss << "\n";
-                max_level_size *= 2;
-                level_size = max_level_size;
-            } else {
-                ss << " ";
-            }
-        }
-        ss << std::endl;
-        ss << "++++++++++++++" << std::endl;
-        return ss.str();
     }
 
 protected:
@@ -309,29 +268,23 @@ protected:
     std::pair<link_type, bool> insert_at(link_type & at, key_type key) {
         link_type *cur_link = &at;
         link_type prev = sentinel;
-//         std::cout << "\n\tkey = " << key << std::endl;
         for(;;) {
 
             if (*cur_link == sentinel) {
                 *cur_link = node_policy.new_node(std::move(key));
                 node_policy.deref(*cur_link).up() = prev;
-//                 std::cout << " inserted at " << *cur_link << std::endl;
                 return std::make_pair(*cur_link, true);
             } else {
                 node_type & cur_node = node_policy.deref(*cur_link);
-//                 std::cout << "node.key " << cur_node.key() << " ";
                 if (less(key, cur_node.key())) {
-//                     std::cout << " go left ";
                     prev = *cur_link;
                     cur_link = &cur_node.left();
                     continue;
                 } else if (greater(key, cur_node.key())) {
-//                     std::cout << " go right ";
                     prev = *cur_link;
                     cur_link = &cur_node.right();
                     continue;
                 } else {
-//                     std::cout << " already exist" << std::endl;
                     return std::make_pair(*cur_link, false);
                 }
             }
