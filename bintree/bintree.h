@@ -89,7 +89,14 @@ public:
     typedef typename node_policy_type::node_type node_type;
     typedef typename node_type::link_type link_type;
     typedef typename node_policy_type::const_link_type const_link_type;
-    static constexpr link_type sentinel = node_type::sentinel;
+    static constexpr link_type sentinel_ = node_type::sentinel;
+    link_type sentinel() {
+        return sentinel_;
+    }
+
+    const_link_type sentinel() const {
+        return const_cast<const_link_type>(sentinel_);
+    }
 
 public:
     BinTree(
@@ -112,15 +119,139 @@ public:
             link_type p = q.front();
             q.pop();
             node_type & node = node_policy.deref(p);
-            if (node.left() != sentinel) {
+            if (node.left() != sentinel()) {
                 q.push(node.left());
             }
-            if (node.right() != sentinel) {
+            if (node.right() != sentinel()) {
                 q.push(node.right());
             }
             node_policy.deallocate_node(p);
         }
     }
+
+    friend class iterator;
+
+    class iterator
+    {
+        friend class BinTree;
+        iterator(link_type link, BinTree *tree) :
+            link(link),
+            tree(tree)
+        {
+        }
+    public:
+        iterator(){}
+        iterator(const iterator &) = default;
+        iterator(iterator &&) = default;
+        iterator& operator=(const iterator &) = default;
+        iterator& operator=(iterator &&) = default;
+
+        key_type& operator*() {
+            return tree->node_policy.deref(link).key();
+        }
+
+        key_type* operator->() {
+            return &tree->node_policy.deref(link).key();
+        }
+
+        iterator operator++() {
+            link = tree->get_nearest_neighbour<detail::right>(link);
+            return *this;
+        }
+
+        iterator operator++(int) {
+            auto result = *this;
+            link = tree->get_nearest_neighbour<detail::right>(link);
+            return std::move(result);
+        }
+
+        iterator operator--() {
+            link = tree->get_nearest_neighbour<detail::left>(link);
+            return *this;
+        }
+
+        iterator operator--(int) {
+            auto result = *this;
+            link = tree->get_nearest_neighbour<detail::left>(link);
+            return std::move(result);
+        }
+
+        bool operator == (const iterator &it) const {
+            return link == it.link;
+        }
+
+        bool operator != (const iterator &it) const {
+            return link != it.link;
+        }
+    private:
+        link_type link;
+        BinTree* tree;
+    };
+
+    friend class const_iterator;
+
+    class const_iterator
+    {
+        friend class BinTree;
+        const_iterator(const_link_type link, const BinTree *tree) :
+            link(link),
+            tree(tree)
+        {
+        }
+    public:
+        const_iterator(){}
+        const_iterator(const const_iterator &) = default;
+        const_iterator(const_iterator &&) = default;
+        const_iterator& operator=(const const_iterator &) = default;
+        const_iterator& operator=(const_iterator &&) = default;
+
+        const_iterator(const iterator &it) :
+            link(it.link),
+            tree(it.tree)
+        {
+        }
+
+        const key_type& operator*() {
+            return tree->node_policy.deref(link).key();
+        }
+
+        const key_type* operator->() {
+            return &tree->node_policy.deref(link).key();
+        }
+
+        const_iterator operator++() {
+            link = tree->get_nearest_neighbour<detail::right>(link);
+            return *this;
+        }
+
+        const_iterator operator++(int) {
+            auto result = *this;
+            link = tree->get_nearest_neighbour<detail::right>(link);
+            return std::move(result);
+        }
+
+        const_iterator operator--() {
+            link = tree->get_nearest_neighbour<detail::left>(link);
+            return *this;
+        }
+
+        const_iterator operator--(int) {
+            auto result = *this;
+            link = tree->get_nearest_neighbour<detail::left>(link);
+            return std::move(result);
+        }
+
+        bool operator == (const const_iterator &it) const {
+            return link == it.link;
+        }
+
+        bool operator != (const const_iterator &it) const {
+            return link != it.link;
+        }
+    private:
+        const_link_type link;
+        const BinTree* tree;
+    };
 
     allocator_type get_allocator() const {
         return allocator;
@@ -134,55 +265,55 @@ public:
         return node_policy;
     }
 
-    const_link_type begin() const {
-        return get_directmost_neighbour<detail::left>(root);
+    iterator begin() {
+        return iterator(get_directmost_neighbour<detail::left>(root), this);
     }
 
     const_link_type rbegin() const {
         return get_directmost_neighbour<detail::right>(root);
     }
 
-    link_type begin() {
-        return get_directmost_neighbour<detail::left>(root);
+    const_iterator begin() const {
+        return const_iterator(get_directmost_neighbour<detail::left>(root), this);
     }
 
     link_type rbegin() {
         return get_directmost_neighbour<detail::right>(root);
     }
 
-    const_link_type end() const {
-        return sentinel;
+    const_iterator end() const {
+        return const_iterator(sentinel(), this);
     }
 
     const_link_type rend() const {
-        return sentinel;
+        return sentinel();
     }
 
-    link_type end() {
-        return sentinel;
+    iterator end() {
+        return iterator(sentinel(), this);
     }
 
     link_type rend() {
-        return sentinel;
+        return sentinel();
     }
 
     template <std::size_t direction>
     const_link_type get_directmost_neighbour(const_link_type item) const {
         check_direction<direction>();
         const_link_type current_link = item;
-        if (item == sentinel) {
-            return sentinel;
+        if (item == sentinel()) {
+            return sentinel();
         }
         for(;;) {
-            link_type next = deref_link<direction>(current_link);
-            if (next != sentinel) {
-                if (deref_link<direction>(next) == sentinel) {
+            const_link_type next = deref_link<direction>(current_link);
+            if (next != sentinel()) {
+                if (deref_link<direction>(next) == sentinel()) {
                     return next;
                 }
                 current_link = next;
                 continue;
             }
-            return sentinel;
+            return sentinel();
         }
 
     }
@@ -191,18 +322,18 @@ public:
     link_type get_directmost_neighbour(link_type item) {
         check_direction<direction>();
         link_type current_link = item;
-        if (item == sentinel) {
-            return sentinel;
+        if (item == sentinel()) {
+            return sentinel();
         }
         for(;;) {
             link_type next = deref_link<direction>(current_link);
-            if (next != sentinel) {
+            if (next != sentinel()) {
                 current_link = next;
                 continue;
             }
             return current_link;
         }
-        return sentinel;
+        return sentinel();
 
     }
 
@@ -211,10 +342,10 @@ public:
     }
 
     template <std::size_t direction>
-    const_link_type& deref_link(const_link_type item) const {
+    const_link_type deref_link(const_link_type item) const {
         check_direction<direction>();
-        if (item == sentinel) {
-            return sentinel;
+        if (item == sentinel()) {
+            return sentinel();
         }
         return node_policy.deref(item).links()[direction];
     }
@@ -222,7 +353,7 @@ public:
     template <std::size_t direction>
     link_type& deref_link(link_type item) {
         check_direction<direction>();
-        if (item == sentinel) {
+        if (item == sentinel()) {
             throw std::logic_error("");
         }
         return node_policy.deref(item).links()[direction];
@@ -231,20 +362,43 @@ public:
     template <std::size_t Right>
     link_type get_nearest_neighbour(link_type item) {
         check_direction<Right>();
-        if (item == sentinel) {
-            return sentinel;
+        if (item == sentinel()) {
+            return sentinel();
         }
         constexpr std::size_t Up = detail::up;
         constexpr std::size_t Left = detail::swap_left_right<Right>();
-        if (deref_link<Right>(item) != sentinel) {
+        if (deref_link<Right>(item) != sentinel()) {
             auto result = get_directmost_neighbour<Left>(deref_link<Right>(item));
             return result;
         }
         link_type up = deref_link<Up>(item);
-        if (up != sentinel && item == deref_link<Left>(up)) {
+        if (up != sentinel() && item == deref_link<Left>(up)) {
             return up;
         }
-        while (up != sentinel && item == deref_link<Right>(up)) {
+        while (up != sentinel() && item == deref_link<Right>(up)) {
+            item = up;
+            up = deref_link<Up>(up);
+        }
+        return up;
+    }
+
+    template <std::size_t Right>
+    const_link_type get_nearest_neighbour(const_link_type item) const {
+        check_direction<Right>();
+        if (item == sentinel()) {
+            return sentinel();
+        }
+        constexpr std::size_t Up = detail::up;
+        constexpr std::size_t Left = detail::swap_left_right<Right>();
+        if (deref_link<Right>(item) != sentinel()) {
+            auto result = get_directmost_neighbour<Left>(deref_link<Right>(item));
+            return result;
+        }
+        const_link_type up = deref_link<Up>(item);
+        if (up != sentinel() && item == deref_link<Left>(up)) {
+            return up;
+        }
+        while (up != sentinel() && item == deref_link<Right>(up)) {
             item = up;
             up = deref_link<Up>(up);
         }
@@ -253,7 +407,7 @@ public:
 
 protected:
     template <std::size_t direction>
-    void check_direction()
+    void check_direction() const
     {
         static_assert(
             direction == detail::left ||
@@ -276,10 +430,10 @@ protected:
 
     std::pair<link_type, bool> insert_at(link_type & at, key_type key) {
         link_type *cur_link = &at;
-        link_type prev = sentinel;
+        link_type prev = sentinel();
         for(;;) {
 
-            if (*cur_link == sentinel) {
+            if (*cur_link == sentinel()) {
                 *cur_link = node_policy.new_node(std::move(key));
                 node_policy.deref(*cur_link).up() = prev;
                 return std::make_pair(*cur_link, true);
