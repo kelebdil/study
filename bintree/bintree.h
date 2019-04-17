@@ -253,6 +253,130 @@ public:
         const BinTree* tree;
     };
 
+    friend class reverese_iterator;
+
+    class reverese_iterator
+    {
+        friend class BinTree;
+        reverese_iterator(link_type link, BinTree *tree) :
+            link(link),
+            tree(tree)
+        {
+        }
+    public:
+        reverese_iterator(){}
+        reverese_iterator(const reverese_iterator &) = default;
+        reverese_iterator(reverese_iterator &&) = default;
+        reverese_iterator& operator=(const reverese_iterator &) = default;
+        reverese_iterator& operator=(reverese_iterator &&) = default;
+
+        key_type& operator*() {
+            return tree->node_policy.deref(link).key();
+        }
+
+        key_type* operator->() {
+            return &tree->node_policy.deref(link).key();
+        }
+
+        reverese_iterator operator++() {
+            link = tree->get_nearest_neighbour<detail::left>(link);
+            return *this;
+        }
+
+        reverese_iterator operator++(int) {
+            auto result = *this;
+            link = tree->get_nearest_neighbour<detail::left>(link);
+            return std::move(result);
+        }
+
+        reverese_iterator operator--() {
+            link = tree->get_nearest_neighbour<detail::right>(link);
+            return *this;
+        }
+
+        reverese_iterator operator--(int) {
+            auto result = *this;
+            link = tree->get_nearest_neighbour<detail::right>(link);
+            return std::move(result);
+        }
+
+        bool operator == (const reverese_iterator &it) const {
+            return link == it.link;
+        }
+
+        bool operator != (const reverese_iterator &it) const {
+            return link != it.link;
+        }
+    private:
+        link_type link;
+        BinTree* tree;
+    };
+
+    friend class const_reverese_iterator;
+
+    class const_reverese_iterator
+    {
+        friend class BinTree;
+        const_reverese_iterator(const_link_type link, const BinTree *tree) :
+            link(link),
+            tree(tree)
+        {
+        }
+    public:
+        const_reverese_iterator(){}
+        const_reverese_iterator(const const_reverese_iterator &) = default;
+        const_reverese_iterator(const_reverese_iterator &&) = default;
+        const_reverese_iterator& operator=(const const_reverese_iterator &) = default;
+        const_reverese_iterator& operator=(const_reverese_iterator &&) = default;
+
+        const_reverese_iterator(const reverese_iterator &it) :
+            link(it.link),
+            tree(it.tree)
+        {
+        }
+
+        const key_type& operator*() {
+            return tree->node_policy.deref(link).key();
+        }
+
+        const key_type* operator->() {
+            return &tree->node_policy.deref(link).key();
+        }
+
+        const_reverese_iterator operator++() {
+            link = tree->get_nearest_neighbour<detail::left>(link);
+            return *this;
+        }
+
+        const_reverese_iterator operator++(int) {
+            auto result = *this;
+            link = tree->get_nearest_neighbour<detail::left>(link);
+            return std::move(result);
+        }
+
+        const_reverese_iterator operator--() {
+            link = tree->get_nearest_neighbour<detail::right>(link);
+            return *this;
+        }
+
+        const_reverese_iterator operator--(int) {
+            auto result = *this;
+            link = tree->get_nearest_neighbour<detail::right>(link);
+            return std::move(result);
+        }
+
+        bool operator == (const const_reverese_iterator &it) const {
+            return link == it.link;
+        }
+
+        bool operator != (const const_reverese_iterator &it) const {
+            return link != it.link;
+        }
+    private:
+        const_link_type link;
+        const BinTree* tree;
+    };
+
     allocator_type get_allocator() const {
         return allocator;
     }
@@ -269,32 +393,32 @@ public:
         return iterator(get_directmost_neighbour<detail::left>(root), this);
     }
 
-    const_link_type rbegin() const {
-        return get_directmost_neighbour<detail::right>(root);
+    const_reverese_iterator rbegin() const {
+        return  const_reverese_iterator(get_directmost_neighbour<detail::right>(root), this);
     }
 
     const_iterator begin() const {
         return const_iterator(get_directmost_neighbour<detail::left>(root), this);
     }
 
-    link_type rbegin() {
-        return get_directmost_neighbour<detail::right>(root);
+    reverese_iterator rbegin() {
+        return reverese_iterator(get_directmost_neighbour<detail::right>(root), this);
     }
 
     const_iterator end() const {
         return const_iterator(sentinel(), this);
     }
 
-    const_link_type rend() const {
-        return sentinel();
+    const_reverese_iterator rend() const {
+        return const_reverese_iterator(sentinel(), this);
     }
 
     iterator end() {
         return iterator(sentinel(), this);
     }
 
-    link_type rend() {
-        return sentinel();
+    reverese_iterator rend() {
+        return reverese_iterator(sentinel(), this);
     }
 
     template <std::size_t direction>

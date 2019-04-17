@@ -30,6 +30,11 @@ int main(int , char ** )
         assert(*it == sorted_numbers[cursor++]);
     }
 
+    cursor = sorted_numbers.size() - 1;
+    for(Tree::reverese_iterator it = tree.rbegin(); it != tree.rend(); ++it) {
+        assert(*it == sorted_numbers[cursor--]);
+    }
+
     Tree t2;
     std::shuffle(numbers.begin(), numbers.end(), std::mt19937{std::random_device{}()});
     for(const auto & i : numbers) {
@@ -40,6 +45,13 @@ int main(int , char ** )
     for(Tree::const_iterator it = t2.begin(); it != t2.end(); ++it) {
         assert(*it == sorted_numbers[cursor++]);
     }
+
+    cursor = sorted_numbers.size() - 1;
+    for(Tree::const_reverese_iterator it = t2.rbegin(); it != t2.rend(); ++it) {
+        assert(*it == sorted_numbers[cursor--]);
+    }
+
+
 
     return 0;
 }
