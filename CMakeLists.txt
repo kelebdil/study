@@ -1,3 +1,4 @@
 add_subdirectory(bintree)
 add_subdirectory(brackets)
+add_subdirectory(memory_chunk_ring_buffer)
 add_subdirectory(ring_buffer)
