@@ -40,8 +40,8 @@ struct test_chunk_ring
             } catch (const std::overflow_error &e) {
                 std::cout << "overflow_error" << std::endl;
                 std::size_t delta = chunk_ring.reminder();
-                if (delta > 0) {
-                    std::size_t size = delta;
+                if (delta > 2*sizeof(std::size_t)) {
+                    std::size_t size = delta - 2*sizeof(std::size_t);
                     try {
                         char *data = (char *)chunk_ring.allocate(size);
                         std::size_t real_size = chunk_ring.size_of_chunk(data);
@@ -49,6 +49,7 @@ struct test_chunk_ring
                         //std::fill_n(data, real_size, '\0');
                         std::cout << "*size: " << size << ", real_size: " << real_size << ", data: " << (void*)data << std::endl;
                         chunk_counter++;
+                        break;
                     } catch (...) {
                         break;
                     }

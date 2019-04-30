@@ -38,11 +38,11 @@ public:
     void* allocate(std::size_t n) {
         char * result = nullptr;
         if (empty_ || !full_) {
-            std::size_t requested_size = (n + 2*sizeof(std::size_t) - 1) & ~std::uint64_t(sizeof(std::size_t) -1);
             result = memory_ + cheap_mod_capacity(head_);
+            std::size_t requested_size = get_aligned_by_size(n + sizeof(std::size_t));
             if (result + requested_size <= memory_ + capacity_) {
                 result = memory_ + increment_by_and_check(head_, requested_size);
-                *reinterpret_cast<std::size_t *>(result) = cheap_mod_capacity(requested_size - sizeof(std::size_t));
+                *reinterpret_cast<std::size_t *>(result) = cheap_mod_capacity(n);
                 result += sizeof(std::size_t);
             } else {
                 throw std::overflow_error("chunk ring overflow");
@@ -81,8 +81,9 @@ public:
         if (full() || !empty()) {
             char *p = ptr - sizeof(std::size_t);
             std::size_t data_size = *reinterpret_cast<std::size_t *>(p);
+            std::size_t size_to_dealloc = get_aligned_by_size(data_size + sizeof(std::size_t));
             if ((memory_ + cheap_mod_capacity(tail_)) == p) {
-                increment_by_and_check(tail_, data_size + sizeof(std::size_t));
+                increment_by_and_check(tail_, size_to_dealloc);
                 --chunk_count_;
             } else {
                 throw std::logic_error("trying to deallocate not last chunk");
@@ -130,6 +131,10 @@ public:
     }
 
 private:
+    std::size_t get_aligned_by_size(std::size_t n) {
+        return (n + sizeof(std::size_t) - 1) & ~std::uint64_t(sizeof(std::size_t) -1);
+    }
+
     size_type increment_by_and_check(size_type &cursor, size_type delta) {
         size_type result = cursor;
         cursor += delta;
