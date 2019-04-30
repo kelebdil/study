@@ -27,10 +27,10 @@ struct test_chunk_ring
         std::size_t chunk_counter = 0;
         for (std::size_t i = 0; !chunk_ring.full(); ++i) {
             try {
-                char *data;
+                std::byte *data;
                 std::size_t size = dist(prng);
 //                 std::cout << "trying to allocate " << size << " bytes" << std::endl;
-                data = (char *)chunk_ring.allocate(size);
+                data = (std::byte *)chunk_ring.allocate(size);
                 std::size_t real_size = chunk_ring.size_of_chunk(data);
                 assert(size <= real_size);
 //                 std::cout << "size: " << size << ", real_size: " << real_size << ", data: " << (void*)data << std::endl;
@@ -43,7 +43,7 @@ struct test_chunk_ring
                 if (delta > 2*sizeof(std::size_t)) {
                     std::size_t size = delta - 2*sizeof(std::size_t);
                     try {
-                        char *data = (char *)chunk_ring.allocate(size);
+                        std::byte *data = (std::byte *)chunk_ring.allocate(size);
                         std::size_t real_size = chunk_ring.size_of_chunk(data);
                         std::cout << "*size: " << size << ", real_size: " << real_size << ", data: " << (void*)data << std::endl;
                         //std::fill_n(data, real_size, '\0');
@@ -65,10 +65,10 @@ struct test_chunk_ring
 
         for(std::size_t i = 0; i < chunk_counter * 10; ++i) {
             if (!chunk_ring.empty()) {
-                char * chunk = (char *)chunk_ring.last_chunk();
+                std::byte * chunk = (std::byte *)chunk_ring.last_chunk();
                 std::size_t size = chunk_ring.size_of_chunk(chunk);
                 //std::cout << "last_chunk size: " << size << ", data: " << chunk << std::endl;
-//                 std::size_t ensure = std::count_if(chunk, chunk + size, [](const char &c){ return c != 0;});
+//                 std::size_t ensure = std::count_if(chunk, chunk + size, [](const std::byte &c){ return c != 0;});
 //                 if (ensure) {
 //                     std::cout << "Extra not null bytes " << ensure << std::endl;
 //                 }
@@ -79,9 +79,9 @@ struct test_chunk_ring
 
             try {
                 std::uniform_int_distribution<std::size_t> dist(1, chunk_ring.reminder() - 2*sizeof(std::size_t));
-                char * data;
+                std::byte * data;
                 std::size_t size = dist(prng);
-                data = (char*)chunk_ring.allocate(size);
+                data = reinterpret_cast<std::byte *>(chunk_ring.allocate(size));
                 std::size_t real_size = chunk_ring.size_of_chunk(data);
                 //std::cout << "size: " << size << ", real_size: " << real_size << ", data: " << (void*)data << std::endl;
                 assert(size <= real_size);
@@ -90,10 +90,10 @@ struct test_chunk_ring
                 if (!chunk_ring.full()) {
                     std::size_t delta = chunk_ring.reminder();
                     if (delta > 0) {
-                        char* data;
+                        std::byte* data;
                         std::size_t size = delta;
                         try {
-                            data = (char*)chunk_ring.allocate(size);
+                            data = reinterpret_cast<std::byte *>(chunk_ring.allocate(size));
                             std::size_t real_size = chunk_ring.size_of_chunk(data);
                             //std::fill_n(data, real_size, 0);
                         } catch (...) {
@@ -111,10 +111,10 @@ struct test_chunk_ring
         std::cout << "Size: " << chunk_ring.size() << std::endl;
 
         while (!chunk_ring.empty()) {
-            char * chunk = (char *)chunk_ring.last_chunk();
+            std::byte * chunk = (std::byte *)chunk_ring.last_chunk();
             std::size_t size = chunk_ring.size_of_chunk(chunk);
             //std::cout << "last_chunk size: " << size << ", data: " << (void*)chunk << std::endl;
-//             std::size_t ensure = std::count_if(chunk, chunk + size, [](const char &c){ return c != 0;});
+//             std::size_t ensure = std::count_if(chunk, chunk + size, [](const std::byte &c){ return c != 0;});
 //             if (ensure) {
 //                 std::cout << "Extra not null bytes " << ensure << std::endl;
 //             }

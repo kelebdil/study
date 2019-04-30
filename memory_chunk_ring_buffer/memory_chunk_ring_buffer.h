@@ -3,15 +3,16 @@
 #include <cstddef>
 #include <memory>
 #include <stdexcept>
+#include <utility>
 
 
-template <typename Allocator = std::allocator<char>>
+template <typename Allocator = std::allocator<std::byte>>
 class memory_chunk_ring_buffer
 {
 public:
     typedef Allocator allocator_type;
     typedef std::size_t size_type;
-    typedef typename allocator_type::template rebind<char>::other char_allocator;
+    typedef typename allocator_type::template rebind<std::byte>::other byte_allocator;
 
     size_type capacity() const {
         return capacity_;
@@ -19,7 +20,7 @@ public:
 
     memory_chunk_ring_buffer(size_type capacity, allocator_type allocator = allocator_type()) :
         allocator_(allocator),
-        char_allocator_(allocator_),
+        byte_allocator_(allocator_),
         capacity_(capacity),
         head_(0),
         tail_(capacity_),
@@ -27,16 +28,16 @@ public:
         full_(false),
         chunk_count_(0)
     {
-        memory_ = char_allocator_.allocate(capacity_);
+        memory_ = byte_allocator_.allocate(capacity_);
     }
 
     ~memory_chunk_ring_buffer()
     {
-        char_allocator_.deallocate(memory_, capacity_);
+        byte_allocator_.deallocate(memory_, capacity_);
     }
 
     void* allocate(std::size_t n) {
-        char * result = nullptr;
+        std::byte * result = nullptr;
         if (empty_ || !full_) {
             result = memory_ + cheap_mod_capacity(head_);
             std::size_t requested_size = get_aligned_by_size(n + sizeof(std::size_t));
@@ -63,7 +64,7 @@ public:
     void* last_chunk() const
     {
         if (!empty()) {
-            char *p = memory_ + cheap_mod_capacity(tail_ + sizeof(std::size_t));
+            std::byte *p = memory_ + cheap_mod_capacity(tail_ + sizeof(std::size_t));
             return p;
         } else {
             throw std::underflow_error("chunk ring underflow");
@@ -71,15 +72,15 @@ public:
     }
 
     std::size_t size_of_chunk(void *ptr) {
-        char * p = reinterpret_cast<char *>(ptr);
+        std::byte * p = reinterpret_cast<std::byte *>(ptr);
         p -= sizeof(std::size_t);
         return *reinterpret_cast<std::size_t *>(p);
     }
 
     void deallocate(void *pointer) {
-        char * ptr = reinterpret_cast<char *>(pointer);
+        std::byte * ptr = reinterpret_cast<std::byte *>(pointer);
         if (full() || !empty()) {
-            char *p = ptr - sizeof(std::size_t);
+            std::byte *p = ptr - sizeof(std::size_t);
             std::size_t data_size = *reinterpret_cast<std::size_t *>(p);
             std::size_t size_to_dealloc = get_aligned_by_size(data_size + sizeof(std::size_t));
             if ((memory_ + cheap_mod_capacity(tail_)) == p) {
@@ -155,9 +156,9 @@ private:
     }
 private:
     allocator_type allocator_;
-    char_allocator char_allocator_;
+    byte_allocator byte_allocator_;
     const size_type capacity_;
-    char *memory_;
+    std::byte *memory_;
     size_type head_;
     size_type tail_;
     bool empty_;
