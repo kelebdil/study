@@ -1,6 +1,7 @@
 #include "external_sort.hpp"
 
 #include <iostream>
+#include <memory>
 #include <random>
 
 /*
@@ -65,24 +66,22 @@ int main(int, char **) {
     }
     std::cout << std::endl;
 
-    std::vector<external_sort::Tape<int> *> tmp;
+    std::vector<std::unique_ptr<external_sort::Tape<int>>> tmp;
 
-    VectorTape<int> in{ data };
-    VectorTape<int> out{ dataSize };
+    auto in = std::make_unique<VectorTape<int>>(data);
+    auto out = std::make_unique<VectorTape<int>>(dataSize);
 
     constexpr std::size_t kMaxMemorySize = 1024;
     tmp.reserve(dataSize * sizeof(int) / kMaxMemorySize + 1);
     for (size_t i = 0; i < tmp.capacity(); ++i) {
         tmp.emplace_back();
-        tmp.back() = new VectorTape<int>(kMaxMemorySize / sizeof(int));
+        tmp.back() = std::make_unique<VectorTape<int>>(kMaxMemorySize / sizeof(int));
     }
-    external_sort::externalSort<int, kMaxMemorySize>(&in, &out, tmp);
-    for (auto d : out.getData()) {
+    external_sort::externalSort<int, kMaxMemorySize>(in, out, tmp);
+    for (auto d : out->getData()) {
         std::cout << d << " ";
     }
     std::cout << std::endl;
-    for (auto p : tmp) {
-        delete p;
-    }
+
     return 0;
 }
