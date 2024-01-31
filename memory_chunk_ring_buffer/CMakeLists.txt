@@ -1,6 +1,10 @@
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3 -g")
+cmake_minimum_required(VERSION 3.20)
+project(memory_chunk_ring_buffer LANGUAGES C CXX)
 
-add_executable(memory_chunk_ring_buffer_test
+set(
+    SRC
     main.cpp
+    memory_chunk_ring_buffer.h
 )
 
+add_executable(${PROJECT_NAME} ${SRC})

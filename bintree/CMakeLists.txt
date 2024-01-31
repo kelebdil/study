@@ -1,6 +1,11 @@
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O0 -g")
+cmake_minimum_required(VERSION 3.20)
+project(bintreetests LANGUAGES C CXX)
 
-add_executable(bintreetests
+set(
+    SRC
+    base_node.h
+    bintree.h
     main.cpp
 )
 
+add_executable(${PROJECT_NAME} ${SRC})
