@@ -26,5 +26,6 @@ add_compile_options(
 
 add_subdirectory(bintree)
 add_subdirectory(brackets)
+add_subdirectory(external_sort)
 add_subdirectory(memory_chunk_ring_buffer)
 add_subdirectory(ring_buffer)
