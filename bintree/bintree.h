@@ -2,10 +2,8 @@
 
 #include "base_node.h"
 
-#include <functional>
 #include <memory>
 #include <queue>
-#include <tuple>
 #include <utility>
 
 template<typename KeyType, typename Allocator = std::allocator<KeyType>>
@@ -126,24 +124,24 @@ public:
         key_type * operator->() { return &tree->node_policy.deref(link).key(); }
 
         iterator operator++() {
-            link = tree->get_nearest_neighbour<detail::right>(link);
+            link = tree->get_nearest_neighbour<node_type::Right>(link);
             return *this;
         }
 
         iterator operator++(int) {
             auto result = *this;
-            link = tree->get_nearest_neighbour<detail::right>(link);
+            link = tree->get_nearest_neighbour<node_type::Right>(link);
             return std::move(result);
         }
 
         iterator operator--() {
-            link = tree->get_nearest_neighbour<detail::left>(link);
+            link = tree->get_nearest_neighbour<node_type::Left>(link);
             return *this;
         }
 
         iterator operator--(int) {
             auto result = *this;
-            link = tree->get_nearest_neighbour<detail::left>(link);
+            link = tree->get_nearest_neighbour<node_type::Left>(link);
             return std::move(result);
         }
 
@@ -181,24 +179,24 @@ public:
         const key_type * operator->() { return &tree->node_policy.deref(link).key(); }
 
         const_iterator operator++() {
-            link = tree->get_nearest_neighbour<detail::right>(link);
+            link = tree->get_nearest_neighbour<node_type::Right>(link);
             return *this;
         }
 
         const_iterator operator++(int) {
             auto result = *this;
-            link = tree->get_nearest_neighbour<detail::right>(link);
+            link = tree->get_nearest_neighbour<node_type::Right>(link);
             return std::move(result);
         }
 
         const_iterator operator--() {
-            link = tree->get_nearest_neighbour<detail::left>(link);
+            link = tree->get_nearest_neighbour<node_type::Left>(link);
             return *this;
         }
 
         const_iterator operator--(int) {
             auto result = *this;
-            link = tree->get_nearest_neighbour<detail::left>(link);
+            link = tree->get_nearest_neighbour<node_type::Left>(link);
             return std::move(result);
         }
 
@@ -232,24 +230,24 @@ public:
         key_type * operator->() { return &tree->node_policy.deref(link).key(); }
 
         reverese_iterator operator++() {
-            link = tree->get_nearest_neighbour<detail::left>(link);
+            link = tree->get_nearest_neighbour<node_type::Left>(link);
             return *this;
         }
 
         reverese_iterator operator++(int) {
             auto result = *this;
-            link = tree->get_nearest_neighbour<detail::left>(link);
+            link = tree->get_nearest_neighbour<node_type::Left>(link);
             return std::move(result);
         }
 
         reverese_iterator operator--() {
-            link = tree->get_nearest_neighbour<detail::right>(link);
+            link = tree->get_nearest_neighbour<node_type::Right>(link);
             return *this;
         }
 
         reverese_iterator operator--(int) {
             auto result = *this;
-            link = tree->get_nearest_neighbour<detail::right>(link);
+            link = tree->get_nearest_neighbour<node_type::Right>(link);
             return std::move(result);
         }
 
@@ -287,24 +285,24 @@ public:
         const key_type * operator->() { return &tree->node_policy.deref(link).key(); }
 
         const_reverese_iterator operator++() {
-            link = tree->get_nearest_neighbour<detail::left>(link);
+            link = tree->get_nearest_neighbour<node_type::Left>(link);
             return *this;
         }
 
         const_reverese_iterator operator++(int) {
             auto result = *this;
-            link = tree->get_nearest_neighbour<detail::left>(link);
+            link = tree->get_nearest_neighbour<node_type::Left>(link);
             return std::move(result);
         }
 
         const_reverese_iterator operator--() {
-            link = tree->get_nearest_neighbour<detail::right>(link);
+            link = tree->get_nearest_neighbour<node_type::Right>(link);
             return *this;
         }
 
         const_reverese_iterator operator--(int) {
             auto result = *this;
-            link = tree->get_nearest_neighbour<detail::right>(link);
+            link = tree->get_nearest_neighbour<node_type::Right>(link);
             return std::move(result);
         }
 
@@ -323,18 +321,18 @@ public:
 
     node_policy_type get_node_policy() const { return node_policy; }
 
-    iterator begin() { return iterator(get_directmost_neighbour<detail::left>(root), this); }
+    iterator begin() { return iterator(get_directmost_neighbour<node_type::Left>(root), this); }
 
     const_reverese_iterator rbegin() const {
-        return const_reverese_iterator(get_directmost_neighbour<detail::right>(root), this);
+        return const_reverese_iterator(get_directmost_neighbour<node_type::Right>(root), this);
     }
 
     const_iterator begin() const {
-        return const_iterator(get_directmost_neighbour<detail::left>(root), this);
+        return const_iterator(get_directmost_neighbour<node_type::Left>(root), this);
     }
 
     reverese_iterator rbegin() {
-        return reverese_iterator(get_directmost_neighbour<detail::right>(root), this);
+        return reverese_iterator(get_directmost_neighbour<node_type::Right>(root), this);
     }
 
     const_iterator end() const { return const_iterator(sentinel(), this); }
@@ -409,8 +407,8 @@ public:
         if (item == sentinel()) {
             return sentinel();
         }
-        constexpr std::size_t Up = detail::up;
-        constexpr std::size_t Left = detail::swap_left_right<Right>();
+        constexpr std::size_t Up = node_type::Up;
+        constexpr auto Left = node_type::template swap_left_right<Right>();
         if (deref_link<Right>(item) != sentinel()) {
             auto result = get_directmost_neighbour<Left>(deref_link<Right>(item));
             return result;
@@ -432,8 +430,8 @@ public:
         if (item == sentinel()) {
             return sentinel();
         }
-        constexpr std::size_t Up = detail::up;
-        constexpr std::size_t Left = detail::swap_left_right<Right>();
+        constexpr std::size_t Up = node_type::Up;
+        constexpr std::size_t Left = node_type::template swap_left_right<Right>();
         if (deref_link<Right>(item) != sentinel()) {
             auto result = get_directmost_neighbour<Left>(deref_link<Right>(item));
             return result;
@@ -452,8 +450,8 @@ public:
 protected:
     template<std::size_t direction>
     void check_direction() const {
-        static_assert(direction == detail::left || direction == detail::right
-                          || direction == detail::up,
+        static_assert(direction == node_type::Left || direction == node_type::Right
+                          || direction == node_type::Up,
                       "direction must be left, right or up");
     };
 
